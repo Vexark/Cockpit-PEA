@@ -1,0 +1,186 @@
+/* Cockpit PEA — app téléphone (lecture seule). Mêmes couleurs que le Cockpit du PC. */
+:root {
+  --fond: #f8fafc;
+  --carte: #ffffff;
+  --texte: #0f172a;
+  --muet: #64748b;
+  --bord: #e2e8f0;
+  --doux: #f1f5f9;
+  --accent: #0284c7;
+  --vert: #059669;
+  --rouge: #dc2626;
+  --orange: #d97706;
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+  --grille: #e1e0d9;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #020617; --carte: #0f172a; --texte: #f1f5f9; --muet: #94a3b8; --bord: #1e293b; --doux: #1e293b;
+    --accent: #38bdf8; --vert: #34d399; --rouge: #f87171; --orange: #fbbf24;
+    --serie-1: #3987e5; --serie-2: #d95926; --serie-3: #199e70; --grille: #2c2c2a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fond: #020617; --carte: #0f172a; --texte: #f1f5f9; --muet: #94a3b8; --bord: #1e293b; --doux: #1e293b;
+  --accent: #38bdf8; --vert: #34d399; --rouge: #f87171; --orange: #fbbf24;
+  --serie-1: #3987e5; --serie-2: #d95926; --serie-3: #199e70; --grille: #2c2c2a; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--fond); color: var(--texte);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+a { color: var(--accent); }
+h1 { font-size: 22px; margin: 4px 0 12px; }
+h2 { font-size: 16px; margin: 0 0 10px; }
+h3 { font-size: 13px; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .04em; color: var(--muet); }
+p { margin: 6px 0; }
+.chiffres { font-variant-numeric: tabular-nums; }
+.muet { color: var(--muet); }
+.petit { font-size: 13px; }
+.mini { font-size: 12px; }
+.pos { color: var(--vert); }
+.neg { color: var(--rouge); }
+.att { color: var(--orange); }
+.gras { font-weight: 600; }
+
+/* En-tête */
+.entete {
+  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 16px 8px; background: var(--carte); border-bottom: 1px solid var(--bord);
+}
+.entete .titre { font-weight: 700; flex: 1; min-width: 0; }
+.entete .titre small { display: block; font-weight: 400; font-size: 11px; color: var(--muet); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icone-bouton {
+  min-width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--texte);
+  font-size: 20px; cursor: pointer;
+}
+.icone-bouton:active { background: var(--doux); }
+.tourne { animation: tourne 1s linear infinite; display: inline-block; }
+@keyframes tourne { to { transform: rotate(360deg); } }
+
+main { max-width: 640px; margin: 0 auto; padding: 12px 16px 24px; }
+
+/* Barre d'onglets en bas */
+.onglets {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; display: flex; background: var(--carte);
+  border-top: 1px solid var(--bord); padding-bottom: env(safe-area-inset-bottom);
+}
+.onglets a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  min-height: 56px; color: var(--muet); text-decoration: none; font-size: 11px; position: relative;
+}
+.onglets a span { font-size: 20px; line-height: 1.1; }
+.onglets a.actif { color: var(--accent); font-weight: 600; }
+.pastille {
+  position: absolute; top: 6px; left: 55%; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--rouge); color: #fff; font-size: 11px; line-height: 18px; font-weight: 700;
+}
+
+/* Cartes et listes */
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.grand { font-size: 30px; font-weight: 700; letter-spacing: -.01em; }
+.ligne { display: flex; align-items: center; gap: 10px; }
+.ligne > .flex { flex: 1; min-width: 0; }
+.entre { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.grille2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tuile { background: var(--doux); border-radius: 10px; padding: 10px; }
+.tuile .libelle { font-size: 12px; color: var(--muet); }
+.tuile .valeur { font-size: 17px; font-weight: 600; }
+.liste { list-style: none; margin: 0; padding: 0; }
+.liste > li { border-top: 1px solid var(--bord); }
+.liste > li:first-child { border-top: 0; }
+.element {
+  display: flex; align-items: center; gap: 10px; padding: 11px 0; min-height: 52px; color: inherit; text-decoration: none;
+}
+a.element::after { content: "›"; color: var(--muet); font-size: 20px; margin-left: 2px; }
+.element .flex { flex: 1; min-width: 0; }
+.element .nom { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.element .droite { text-align: right; white-space: nowrap; }
+.tronque { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--doux); }
+.badge.vert { color: var(--vert); background: color-mix(in srgb, var(--vert) 14%, transparent); }
+.badge.rouge { color: var(--rouge); background: color-mix(in srgb, var(--rouge) 14%, transparent); }
+.badge.orange { color: var(--orange); background: color-mix(in srgb, var(--orange) 16%, transparent); }
+.badge.gris { color: var(--muet); }
+.indice {
+  width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; flex-shrink: 0; background: var(--doux);
+}
+.indice.vert { color: var(--vert); background: color-mix(in srgb, var(--vert) 14%, transparent); }
+.indice.orange { color: var(--orange); background: color-mix(in srgb, var(--orange) 16%, transparent); }
+.indice.rouge { color: var(--rouge); background: color-mix(in srgb, var(--rouge) 14%, transparent); }
+.indice.gris { color: var(--muet); }
+
+/* Barres (poches, critères) */
+.barre { height: 8px; border-radius: 4px; background: var(--doux); overflow: hidden; position: relative; }
+.barre > i { display: block; height: 100%; border-radius: 4px; }
+.barre > b { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--texte); opacity: .55; }
+.critere { display: grid; grid-template-columns: 1fr 70px 28px; gap: 8px; align-items: center; font-size: 13px; padding: 4px 0; }
+.critere small { grid-column: 1 / -1; color: var(--muet); margin-top: -2px; }
+
+/* Puces de filtre */
+.filtres { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; scrollbar-width: none; }
+.filtres button {
+  flex-shrink: 0; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--bord);
+  background: var(--carte); color: var(--texte); font: inherit; font-size: 13px;
+}
+.filtres button.actif { background: var(--accent); border-color: var(--accent); color: var(--fond); }
+
+/* Boutons et champs */
+.bouton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 18px;
+  border-radius: 10px; border: 1px solid var(--bord); background: var(--carte); color: var(--texte); font: inherit;
+  font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.bouton.principal { background: var(--accent); border-color: var(--accent); color: var(--fond); }
+.bouton.large { width: 100%; }
+.bouton:disabled { opacity: .55; }
+.champ {
+  width: 100%; min-height: 48px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--bord);
+  background: var(--carte); color: var(--texte); font: inherit; font-size: 16px;
+}
+.champ:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+label.case { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+label.case input { width: 20px; height: 20px; }
+
+/* Messages */
+.message { border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; background: var(--doux); }
+.message.attention { background: color-mix(in srgb, var(--orange) 16%, transparent); }
+.message.erreur { background: color-mix(in srgb, var(--rouge) 14%, transparent); }
+.vide { text-align: center; color: var(--muet); padding: 24px 8px; }
+
+/* Écran de déverrouillage */
+.verrou { max-width: 420px; margin: 8vh auto 0; text-align: center; }
+.verrou .logo { font-size: 48px; }
+.verrou form { text-align: left; margin-top: 20px; display: grid; gap: 10px; }
+
+/* Graphique */
+svg.courbe { width: 100%; height: auto; display: block; }
+.legende { display: flex; gap: 14px; font-size: 12px; color: var(--muet); margin-top: 6px; flex-wrap: wrap; }
+.legende i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+
+/* Puces des listes avantages / inconvénients */
+ul.points { margin: 0; padding: 0; list-style: none; }
+ul.points li { display: flex; gap: 8px; padding: 3px 0; font-size: 14px; }
+ul.points li::before { content: attr(data-s); flex-shrink: 0; font-weight: 700; }
+ul.points.plus li::before { color: var(--vert); }
+ul.points.moins li::before { color: var(--rouge); }
+ul.points.info li::before { color: var(--muet); }
+
+/* Installation */
+.installer {
+  position: fixed; left: 12px; right: 12px; bottom: calc(68px + env(safe-area-inset-bottom)); z-index: 20;
+  background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; padding: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .18); display: grid; gap: 8px;
+}
+.installer[hidden] { display: none; }
+.bouton.discret { border-color: transparent; background: transparent; color: var(--muet); }
+em.pastille { font-style: normal; }
+details > summary { cursor: pointer; }

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cockpit PEA</title>
+<meta name="description" content="Cockpit PEA : consultation (lecture seule) de la copie chiffrée publiée par le PC">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<link rel="stylesheet" href="style.css">
+<script>try { const t = localStorage.getItem('cockpit-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<header class="entete">
+  <div class="titre">Cockpit PEA<small id="sous-titre"></small></div>
+  <button type="button" class="icone-bouton" id="masquer" title="Cacher les montants" hidden>👁</button>
+  <button type="button" class="icone-bouton" id="actualiser" title="Télécharger la dernière copie">⟳</button>
+</header>
+<main id="app"><p class="vide">Chargement…</p></main>
+<nav class="onglets" id="onglets" hidden></nav>
+<div id="installer" class="installer" hidden></div>
+<script type="module" src="app.js"></script>
+<script>
+  // hors connexion : le service worker garde une copie de l'app dans le téléphone
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // installation : bouton « Installer l'app » quand Chrome le permet, sinon explication (lien ouvert hors de Chrome…)
+  (() => {
+    const zone = document.getElementById('installer');
+    const installee = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    if (installee) return;
+    let proposition = null;
+    const fermer = '<button type="button" class="bouton discret" data-fermer>Plus tard</button>';
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      proposition = e;
+      zone.innerHTML = `<strong>Installe l'app sur ton téléphone</strong><span class="petit muet">Icône dans tes applications, plein écran, dernière copie lisible sans réseau.</span><div class="ligne"><button type="button" class="bouton principal" data-installer>📲 Installer l'app</button>${fermer}</div>`;
+      zone.hidden = false;
+    });
+    window.addEventListener('appinstalled', () => { zone.hidden = true; });
+    zone.addEventListener('click', async (ev) => {
+      if (ev.target.closest('[data-fermer]')) zone.hidden = true;
+      if (ev.target.closest('[data-installer]') && proposition) { proposition.prompt(); await proposition.userChoice.catch(() => null); proposition = null; zone.hidden = true; }
+    });
+    setTimeout(() => {
+      if (proposition) return;
+      const ua = navigator.userAgent;
+      const integre = /Instagram|FBAN|FBAV|WhatsApp|Snapchat|TikTok|LinkedInApp|; wv\)/.test(ua);
+      const chrome = /Chrome\//.test(ua) && !/SamsungBrowser|EdgA|OPR|Firefox|MiuiBrowser/.test(ua);
+      zone.innerHTML = `<strong>Pour installer l'app</strong><span class="petit muet">${integre
+        ? 'Ce lien est ouvert dans une autre application (WhatsApp…), qui ne permet pas d\'installer. Touche ⋮ puis « Ouvrir dans Chrome ».'
+        : chrome ? 'Menu ⋮ en haut à droite → « Ajouter à l\'écran d\'accueil » → choisis « Installer ». Si rien ne se passe, recharge la page et attends 10 secondes.'
+          : 'Ouvre cette adresse dans Google Chrome : c\'est lui qui installe l\'app proprement sur Android.'}</span><div class="ligne">${fermer}</div>`;
+      zone.hidden = false;
+    }, 6000);
+  })();
+</script>
+</body>
+</html>
