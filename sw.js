@@ -1,5 +1,5 @@
 // Service worker : copie de l'app dans le téléphone pour qu'elle s'ouvre sans réseau.
-const VERSION = 'cockpit-ad0ca2c0f0ea';
+const VERSION = 'cockpit-20472595faf2';
 const FICHIERS = ["./", "index.html", "app.js", "style.css", "manifest.json", "icone-192.png", "icone-512.png"];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FICHIERS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {

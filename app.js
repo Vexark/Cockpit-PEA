@@ -69,7 +69,7 @@ function cleMemorisee(env) {
 // ---------------------------------------------------------------- chargement de la copie
 async function telecharger() {
   const r = await fetch(`${FICHIER}?t=${Date.now()}`, { cache: 'no-store' });
-  if (r.status === 404) throw new Error('aucune copie publiée pour l\'instant (choisis un mot de passe dans Paramètres → App téléphone, sur le PC)');
+  if (r.status === 404) throw new Error('le PC n\'a encore rien envoyé. Sur le PC : Paramètres → App téléphone → choisis un mot de passe → « Enregistrer et publier ». Attends 1 à 2 minutes puis touche ⟳ ici');
   if (!r.ok) throw new Error(`erreur ${r.status}`);
   return r.json();
 }
