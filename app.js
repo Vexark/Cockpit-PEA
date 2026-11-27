@@ -174,9 +174,11 @@ function pageAccueil(d) {
         <div class="tuile"><div class="libelle">Total versé</div><div class="valeur chiffres">${euros(pf.total_verse)}</div></div>
         <div class="tuile"><div class="libelle">Liquidités</div><div class="valeur chiffres">${euros(pf.liquidites)}</div></div>
         <div class="tuile"><div class="libelle">Rendement annuel (TRI)</div><div class="valeur chiffres">${perf.tri_fiable ? pct(perf.tri_annualise) : '<span class="muet petit">pas encore assez de recul</span>'}</div></div>
-        <div class="tuile"><div class="libelle">Budget poche actions</div><div class="valeur chiffres">${euros(pf.budget_actions)}</div></div>
+        <div class="tuile"><div class="libelle">Liquidités poche actions</div><div class="valeur chiffres">${euros(pf.budget_actions)}</div></div>
       </div>
     </div>
+    ${carteMois(d.plan_mois)}
+    ${cartePari(d.pari)}
     <div class="carte"><h2>Mes poches</h2>${Object.values(pf.poches || {}).map(barrePoche).join('')}
       <p class="mini muet">Le trait vertical marque la cible ; orange = écart de plus de 5 points.</p></div>
     ${evo.length >= 2 ? `<div class="carte"><h2>Évolution</h2>${courbe([
@@ -215,7 +217,7 @@ function pageActions(d) {
     return `<li><a class="element" href="${lienFiche(w.ticker)}">
       <div class="indice ${a ? fondIndice(a.indice_achat_pct) : 'gris'}">${a ? a.indice_achat_pct : '—'}</div>
       <div class="flex"><div class="nom">${esc(w.nom || w.ticker)}</div>
-        <div class="mini muet">${w.achetable ? `✓ achetable (${w.nb_achetables} titre${w.nb_achetables > 1 ? 's' : ''})` : `il manque ${euros(w.manque)}${w.mois_pour_y_arriver ? ` (≈ ${w.mois_pour_y_arriver} mois)` : ''}`}${w.sous_cible ? ' · sous ton prix cible' : ''}</div></div>
+        <div class="mini muet">${w.achetable ? `✓ achetable (${w.nb_achetables} titre${w.nb_achetables > 1 ? 's' : ''})` : `ticket ${euros(w.cout_un_titre)}${w.poids_ticket_pct != null ? ` · ${nombre(w.poids_ticket_pct)} % de la poche cash` : ''}`}${w.sous_cible ? ' · sous ton prix cible' : ''}</div></div>
       <div class="droite chiffres"><div class="gras">${nombre(w.prix)} €</div><div class="mini ${signe(w.variation_jour_pct)}">${pct(w.variation_jour_pct)}</div></div></a></li>`;
   }).join('');
   return `<h1>Mes actions</h1>
@@ -231,6 +233,32 @@ function trouverFiche(d, t) {
     || (d.alertes || []).find((a) => a.ticker === t && a.contexte)?.contexte || null;
 }
 
+// PEA 80/20 (27/11/2026) : ce que je fais ce mois-ci (données d'exécution) et « le Top 5 fait-il mieux que l'ETF ? »
+function carteMois(p) {
+  if (!p) return '';
+  const o = p.ordre;
+  const plans = (p.plans || []).map((x) => `<div class="entre petit"><span>Plan ${esc(x.etf)} (le ${x.jour}, automatique)</span><span class="chiffres">${euros(x.montant)}</span></div>`).join('');
+  const ordre = o
+    ? `<div class="entre petit"><span>Poche actions : ${o.quantite} × ${esc(o.nom)}</span><span class="chiffres">limite ${euros(o.prix_limite)}</span></div>
+       <p class="mini muet chiffres">${euros(o.montant)} + ${euros(o.frais)} de frais · reste ${euros(o.reste)}${o.verdict ? ` · ${esc(o.verdict)}` : ''}</p>`
+    : `<p class="petit">Poche actions : attendre — ${esc(p.attente || '')}</p>`;
+  return `<div class="carte"><h2>Versement de ${esc(p.mois)}</h2>
+    <div class="entre petit"><span>Virement le ${dateFr(p.date_versement)}${p.versement_recu ? ' ✓' : ''}</span><span class="chiffres">${euros(p.virement)}</span></div>
+    ${plans}${ordre}
+    <p class="mini muet">Exécution &amp; Sizing · ordre à saisir dans Trade Republic (le Cockpit n'en passe aucun) · cours différés ~15 min.</p></div>`;
+}
+
+function cartePari(r) {
+  if (!r || !r.verdict) return '';
+  const p = r.poche || {};
+  return `<div class="carte"><h2>Le Top 5 bat-il l'ETF ?</h2>
+    <p class="petit">${esc(r.verdict.phrase)}</p>
+    ${r.verdict.recommandation ? `<p class="petit neg gras">${esc(r.verdict.recommandation)}</p>` : ''}
+    ${r.cohortes?.length ? `<div class="entre petit"><span>Poche guidée par le Top 5</span><span class="chiffres">${euros(p.valeur)}</span></div>
+      <div class="entre petit"><span>Mêmes versements dans DCAM</span><span class="chiffres">${euros(p.valeur_dcam)}</span></div>` : ''}
+    ${r.robot ? `<p class="mini muet">Robot « Top 5 Cockpit » (simulation depuis le ${dateFr(r.robot.depuis)}) : ${euros(r.robot.valeur)} contre ${euros(r.robot.valeur_dcam)} pour son jumeau DCAM.</p>` : ''}</div>`;
+}
+
 function contenuFiche(a) {
   const v = a.vente;
   const criteres = (a.criteres || []).map((c) => `<div class="critere"><span class="tronque">${esc(c.nom)}</span>
@@ -239,7 +267,9 @@ function contenuFiche(a) {
   return `
     <div class="carte"><div class="ligne">
       <div class="indice ${a.couleur || fondIndice(a.indice_achat_pct)}" style="width:64px;height:64px;font-size:20px">${a.indice_achat_pct ?? '—'}</div>
-      <div class="flex"><div class="muet mini">Indice d'achat</div><div class="gras">${badge(a.verdict || '—', a.couleur)}</div>
+      <div class="flex">${a.jugement ? `<div class="muet mini">Mon avis</div><div class="gras">${badge(a.jugement.verdict, a.jugement.couleur)}</div>
+        <div class="mini muet">≈ ${nombre(a.jugement.rendement?.total)} %/an (ETF ${nombre(a.jugement.rendement?.etf)} %) · indice d'achat (timing) ${a.indice_achat_pct} %</div>`
+        : `<div class="muet mini">Indice d'achat</div><div class="gras">${badge(a.verdict || '—', a.couleur)}</div>`}
         ${a.confiance_pct != null ? `<div class="mini muet">Données disponibles : ${a.confiance_pct} %</div>` : ''}</div></div>
       ${a.conseil ? `<p class="petit" style="margin-top:10px">${esc(a.conseil)}</p>` : ''}</div>
     ${v ? `<div class="carte"><div class="ligne"><div class="indice ${v.couleur}" style="width:64px;height:64px;font-size:20px">${v.indice_vente_pct}</div>
@@ -248,7 +278,7 @@ function contenuFiche(a) {
       ${points(v.raisons, 'info', '•')}</div>` : ''}
     ${a.avantages?.length || a.inconvenients?.length ? `<div class="carte"><h3 style="margin-top:0">Avantages</h3>${points(a.avantages, 'plus', '+') || '<p class="muet petit">—</p>'}
       <h3>Inconvénients</h3>${points(a.inconvenients, 'moins', '−') || '<p class="muet petit">—</p>'}</div>` : ''}
-    ${criteres ? `<div class="carte"><h2>Les 10 critères</h2>${criteres}</div>` : ''}
+    ${criteres ? `<div class="carte"><h2>Les 8 critères</h2>${criteres}</div>` : ''}
     ${a.contexte?.length ? `<div class="carte"><h2>Remise en contexte</h2>${points(a.contexte, 'info', '•')}</div>` : ''}
     ${a.description ? `<div class="carte"><details><summary class="gras">L'entreprise</summary><p class="petit">${esc(a.description)}</p></details></div>` : ''}`;
 }
@@ -261,7 +291,7 @@ function pageFiche(d, t) {
     <p class="muet petit">${esc(t)}${a.secteur ? ` · ${esc(a.secteur)}` : ''}${a.pays ? ` · ${esc(a.pays)}` : ''}</p>
     ${a.prix != null ? `<p class="chiffres"><span class="gras">${nombre(a.prix)} €</span> <span class="mini muet">cours du ${dateHeure(a.prix_horodatage)}${a.differe ? ' (différé)' : ''}</span></p>` : ''}
     ${contenuFiche(a)}
-    <p class="mini muet">Fiche calculée le ${dateHeure(a.calcule_le)}. Score transparent : 10 critères expliqués, aucune promesse de gain.</p>`;
+    <p class="mini muet">Fiche calculée le ${dateHeure(a.calcule_le)}. Score transparent : 8 critères expliqués, aucune promesse de gain.</p>`;
 }
 
 function pageTop(d) {
@@ -269,11 +299,11 @@ function pageTop(d) {
   const lignes = (top.top || []).map((a, i) => `<li><a class="element" href="${lienFiche(a.ticker)}">
       <div class="indice ${a.couleur}">${a.indice_achat_pct}</div>
       <div class="flex"><div class="nom">${i + 1}. ${esc(a.nom)}</div><div class="mini muet tronque">${esc(a.secteur || '')} · ${esc(a.pays || '')}</div></div>
-      <div class="droite"><div class="gras chiffres">${nombre(a.prix)} €</div>${badge(a.verdict, a.couleur)}</div></a></li>`).join('');
+      <div class="droite"><div class="gras chiffres">${nombre(a.prix)} €</div>${a.jugement ? badge(`${a.jugement.verdict} · ≈ ${nombre(a.jugement.rendement?.total)} %/an`, a.jugement.couleur) : badge(a.verdict, a.couleur)}</div></a></li>`).join('');
   return `<h1>Top 5</h1>
-    <p class="petit muet">Les 5 actions éligibles PEA les mieux notées par l'indice d'achat (max 2 par secteur), parmi ${nombre(top.nb_analysees)} analysées${top.dernier_scan ? `, le ${dateHeure(top.dernier_scan)}` : ''}.</p>
+    <p class="petit muet">Les 5 « pépites » (« Mon avis » : rendement attendu au-dessus de l'exigence ajustée au risque, max 2 par secteur), parmi ${nombre(top.nb_analysees)} analysées${top.dernier_scan ? `, le ${dateHeure(top.dernier_scan)}` : ''}.</p>
     <div class="carte">${lignes ? `<ul class="liste">${lignes}</ul>` : '<p class="muet">Classement pas encore calculé.</p>'}</div>
-    <p class="mini muet">Ce sont des opportunités à examiner. Touche une action pour voir ses 10 critères.</p>`;
+    <p class="mini muet">Ce sont des opportunités à examiner. Touche une action pour voir ses 8 critères.</p>`;
 }
 
 function pageRobots(d) {
